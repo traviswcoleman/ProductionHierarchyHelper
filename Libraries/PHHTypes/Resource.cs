@@ -8,5 +8,6 @@ namespace PHHTypes
     {
         public string Name { get; set; }
         public string Unit { get; set; }
-    }
+		public decimal Amount { get; set; }
+	}
 }

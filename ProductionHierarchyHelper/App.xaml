@@ -1,0 +1,30 @@
+﻿<Application x:Class="ProductionHierarchyHelper.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ProductionHierarchyHelper"
+             xmlns:sys="clr-namespace:System.Windows;assembly=PresentationFramework"
+			 
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary>
+					<sys:Thickness x:Key="MarginSize" Bottom="5" Left="5" Top="5" Right="5" />
+					<Style x:Key="BaseStyle" TargetType="FrameworkElement">
+						<Setter Property="Margin" Value="{StaticResource MarginSize}" />
+					</Style>
+					<Style TargetType="GroupBox" BasedOn="{StaticResource BaseStyle}" />
+					<Style TargetType="ListBox" BasedOn="{StaticResource BaseStyle}" />
+					<Style TargetType="Button" BasedOn="{StaticResource BaseStyle}">
+						<Setter Property="Padding" Value="{StaticResource MarginSize}" />
+						<Setter Property="MinWidth" Value="70" />
+					</Style>
+					<Style TargetType="ComboBox" BasedOn="{StaticResource BaseStyle}" />
+					<Style TargetType="TextBox" BasedOn="{StaticResource BaseStyle}">
+						<Setter Property="Padding" Value="{StaticResource MarginSize}" />
+					</Style>
+				</ResourceDictionary>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Application.Resources>
+</Application>

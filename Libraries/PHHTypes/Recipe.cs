@@ -8,7 +8,7 @@ namespace PHHTypes
     {
         public string Name { get; set; }
         public decimal ProcessTime { get; set; }
-        public Dictionary<Resource, decimal> Inputs { get; set; }
-        public Dictionary<Resource, decimal> Outputs { get; set; }
+        public List<Resource> Inputs { get; set; }
+        public List<Resource> Outputs { get; set; }
     }
 }

@@ -6,6 +6,6 @@ namespace PHHTypes
     public class Node
     {
         public string Name { get; set; }
-        public IEnumerable<Recipe> Recipes { get; set; }
+        public List<Recipe> Recipes { get; set; }
     }
 }
