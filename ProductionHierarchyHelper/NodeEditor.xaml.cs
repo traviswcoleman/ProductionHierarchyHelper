@@ -18,12 +18,13 @@ namespace ProductionHierarchyHelper
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
-	public partial class MainWindow : Window
+	public partial class NodeEditor : Window
 	{
 		private readonly ObservableCollection<Node> nodes = new ObservableCollection<Node>();
 		private readonly ObservableCollection<Resource> allResources = new ObservableCollection<Resource>();
+		private bool IsDirty = false;
 
-		public MainWindow()
+		public NodeEditor()
 		{
 			InitializeComponent();
 		}
@@ -214,6 +215,7 @@ namespace ProductionHierarchyHelper
 		private void Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
 			PopulateAllResources();
+			IsDirty = true;
 		}
 
 		private TabItem CreateNewTab()
@@ -877,6 +879,7 @@ namespace ProductionHierarchyHelper
 				using StreamWriter sw = new StreamWriter(Properties.UserSettings.Default.LastFile);
 				using JsonTextWriter tw = new JsonTextWriter(sw);
 				serializer.Serialize(tw, nodes);
+				IsDirty = false;
 			}
 		}
 
@@ -904,6 +907,7 @@ namespace ProductionHierarchyHelper
 					}
 					PopulateAllResources();
 				}
+				IsDirty = false;
 			}
 		}
 
@@ -939,11 +943,20 @@ namespace ProductionHierarchyHelper
 
 		private void NewCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
 		{
+			if (IsDirty)
+			{
+				var result = MessageBox.Show(this, "You have unsaved changes. Would you like to save first?", "Save Confirmation", MessageBoxButton.YesNoCancel, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
+				if (result == MessageBoxResult.Yes)
+					Save();
+				if (result == MessageBoxResult.Cancel)
+					return;
+			}
 			Properties.UserSettings.Default.LastFile = null;
 			Properties.UserSettings.Default.Save();
 			nodes.Clear();
 			allResources.Clear();
 			e.Handled = true;
+			IsDirty = false;
 		}
 
 		private void NewCommand_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
@@ -953,7 +966,15 @@ namespace ProductionHierarchyHelper
 
 		private void OpenCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
 		{
-			NewCommand_Executed(null, e); //Clear current elements
+			if (IsDirty)
+			{
+				var dlgResult = MessageBox.Show(this, "You have unsaved changes. Would you like to save?", "Save Confirmation", MessageBoxButton.YesNoCancel, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
+				if (dlgResult == MessageBoxResult.Yes)
+					Save();
+				if (dlgResult == MessageBoxResult.Cancel)
+					return;
+			}
+
 			OpenFileDialog dialog = new OpenFileDialog
 			{
 				Filter = "Json Files (*.json)|*.json",
@@ -964,6 +985,7 @@ namespace ProductionHierarchyHelper
 			bool? result = dialog.ShowDialog(this);
 			if(result.HasValue && result.Value)
 			{
+				NewCommand_Executed(null, e); //Clear current elements
 				Properties.UserSettings.Default.LastFile = dialog.FileName;
 				Properties.UserSettings.Default.Save();
 				Load();
@@ -973,6 +995,19 @@ namespace ProductionHierarchyHelper
 		private void SaveCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
 		{
 			Save();
+		}
+
+		private void CloseCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+		{
+			if(IsDirty)
+			{
+				var result = MessageBox.Show(this, "You have unsaved changes. Would you like to save?", "Save Confirmation", MessageBoxButton.YesNoCancel, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
+				if (result == MessageBoxResult.Yes)
+					Save();
+				if (result == MessageBoxResult.Cancel)
+					return;
+			}
+			Application.Current.Shutdown();
 		}
 	}
 }

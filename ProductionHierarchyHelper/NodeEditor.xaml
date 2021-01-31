@@ -1,4 +1,4 @@
-﻿<Window x:Class="ProductionHierarchyHelper.MainWindow"
+﻿<Window x:Class="ProductionHierarchyHelper.NodeEditor"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,6 +12,7 @@
 		<CommandBinding Command="New" CanExecute="NewCommand_CanExecute"  Executed="NewCommand_Executed" />
 		<CommandBinding Command="Open" Executed="OpenCommand_Executed" />
 		<CommandBinding Command="Save" Executed="SaveCommand_Executed" />
+		<CommandBinding Command="Close" Executed="CloseCommand_Executed" />
 	</Window.CommandBindings>
 	<Grid>
 		<Grid.ColumnDefinitions>
@@ -25,9 +26,13 @@
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 		<Menu Grid.ColumnSpan="99">
-			<MenuItem Header="New" Command="New" />
-			<MenuItem Header="Open" Command="Open" />
-			<MenuItem Header="Save" Command="Save" />
+			<MenuItem Header="_File">
+				<MenuItem Header="_New" Command="New" />
+				<MenuItem Header="_Open" Command="Open" />
+				<MenuItem Header="_Save" Command="Save" />
+				<Separator />
+				<MenuItem Header="E_xit" Command="Close" />
+			</MenuItem>
 		</Menu>
 		<ListBox Grid.RowSpan="99" x:Name="lbNodes" MinWidth="100" SelectionChanged="lbNodes_SelectionChanged" Grid.Row="1">
 			<ListBox.ItemTemplate>
