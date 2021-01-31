@@ -11,6 +11,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace ProductionHierarchyHelper
 {
@@ -212,16 +213,17 @@ namespace ProductionHierarchyHelper
 
 		private void Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
-			Save();
 			PopulateAllResources();
 		}
 
 		private TabItem CreateNewTab()
 		{
 			TabItem tabItem = new TabItem();
+			
 			Binding binding = new Binding("Content.Children[0].Children[1].Text")
 			{
-				RelativeSource = new RelativeSource(RelativeSourceMode.Self)
+				RelativeSource = new RelativeSource(RelativeSourceMode.Self),
+				Mode = BindingMode.OneWay
 			};
 			tabItem.SetBinding(TabItem.HeaderProperty, binding);
 
@@ -300,10 +302,18 @@ namespace ProductionHierarchyHelper
 			{
 				Content = "Amount"
 			};
+
+			Label lblIUnit = new Label
+			{
+				Content = "Unit"
+			};
+
 			lblIAmount.SetValue(Grid.ColumnProperty, 1);
+			lblIUnit.SetValue(Grid.ColumnProperty, 2);
 
 			grdInputs.Children.Add(lblIResource);
 			grdInputs.Children.Add(lblIAmount);
+			grdInputs.Children.Add(lblIUnit);
 
 
 			Button btnAddInput = new Button
@@ -352,10 +362,17 @@ namespace ProductionHierarchyHelper
 			{
 				Content = "Amount"
 			};
+
+			Label lblOUnit = new Label
+			{
+				Content = "Unit"
+			};
 			lblOAmount.SetValue(Grid.ColumnProperty, 1);
+			lblOUnit.SetValue(Grid.ColumnProperty, 2);
 
 			grdOutputs.Children.Add(lblOResource);
 			grdOutputs.Children.Add(lblOAmount);
+			grdOutputs.Children.Add(lblOUnit);
 
 			Button btnAddOutput = new Button
 			{
@@ -388,7 +405,7 @@ namespace ProductionHierarchyHelper
 			outerGrid.Children.Add(btnDeleteRecipe);
 
 			tabItem.Content = outerGrid;
-
+			VisualStateManager.GoToState(tabItem, "Selected", true);
 			return tabItem;
 		}
 
@@ -432,6 +449,7 @@ namespace ProductionHierarchyHelper
 		private void addIOControlsToGrid(Grid grid, Resource resource = null)
 		{
 			grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+			StackPanel spResource = new StackPanel { Name=nameof(spResource), Orientation = Orientation.Horizontal };
 			ComboBox cmbResource = new ComboBox
 			{
 				Name = nameof(cmbResource),
@@ -440,9 +458,17 @@ namespace ProductionHierarchyHelper
 				IsEditable = true,
 				Text = resource?.Name ?? ""
 			};
-			cmbResource.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 2);
+			spResource.Children.Add(cmbResource);
 
-			grid.Children.Add(cmbResource);
+			Button btnToggleDisable = new Button { Content = "Toggle"
+			};
+			btnToggleDisable.Click += BtnToggleDisable_Click;
+
+			spResource.Children.Add(btnToggleDisable);
+
+			spResource.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 2);
+
+			grid.Children.Add(spResource);
 
 			TextBox txtAmount = new TextBox
 			{
@@ -487,6 +513,35 @@ namespace ProductionHierarchyHelper
 			btnDeleteInput.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 2);
 
 			grid.Children.Add(btnDeleteInput);
+		}
+
+		private void BtnToggleDisable_Click(object sender, RoutedEventArgs e)
+		{
+			if (sender is Button btnToggle)
+			{
+				
+				int? index = btnToggle.Parent.GetValue(Grid.RowProperty) as int?;
+				if (index.HasValue)
+				{
+					if (tabs.SelectedItem is TabItem tabItem
+						&& tabItem.Content is DependencyObject tabContent
+						&& tabContent.FindChild<GroupBox>("gbInputs") is GroupBox gbInputs
+						&& gbInputs.Content is ScrollViewer svInputs
+						&& svInputs.Content is Grid grdInputs)
+					{
+						for(int i = 0; i < grdInputs.Children.Count; i++)
+						{
+							if(grdInputs.Children[i].GetValue(Grid.RowProperty) is int controlRow && 
+								controlRow == index && 
+								grdInputs.Children[i] is StackPanel spResource &&
+								spResource.Name == "spResource")
+							{
+								((ComboBox)spResource.Children[0]).IsEnabled = !((ComboBox)spResource.Children[0]).IsEnabled;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		private void RemoveRowFromGrid(Grid grid, int rowIndex)
@@ -841,14 +896,12 @@ namespace ProductionHierarchyHelper
 				ObservableCollection<Node> loadedNodes = serializer.Deserialize<ObservableCollection<Node>>(jr);
 				if (loadedNodes != null)
 				{
-					nodes.CollectionChanged -= Nodes_CollectionChanged;
 					nodes.Clear();
 
 					foreach (Node n in loadedNodes)
 					{
 						nodes.Add(n);
 					}
-					nodes.CollectionChanged += Nodes_CollectionChanged;
 					PopulateAllResources();
 				}
 			}
@@ -882,6 +935,44 @@ namespace ProductionHierarchyHelper
 				tabs.Items.Insert(tabs.Items.Count - 1, CreateNewTab());
 				tabs.SelectedIndex--;
 			}
+		}
+
+		private void NewCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+		{
+			Properties.UserSettings.Default.LastFile = null;
+			Properties.UserSettings.Default.Save();
+			nodes.Clear();
+			allResources.Clear();
+			e.Handled = true;
+		}
+
+		private void NewCommand_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = (nodes != null && nodes.Any()) || (allResources != null && allResources.Any());
+		}
+
+		private void OpenCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+		{
+			NewCommand_Executed(null, e); //Clear current elements
+			OpenFileDialog dialog = new OpenFileDialog
+			{
+				Filter = "Json Files (*.json)|*.json",
+				DefaultExt = "json",
+				Multiselect = false,
+				CheckFileExists = true
+			};
+			bool? result = dialog.ShowDialog(this);
+			if(result.HasValue && result.Value)
+			{
+				Properties.UserSettings.Default.LastFile = dialog.FileName;
+				Properties.UserSettings.Default.Save();
+				Load();
+			}
+		}
+
+		private void SaveCommand_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+		{
+			Save();
 		}
 	}
 }

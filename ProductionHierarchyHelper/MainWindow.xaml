@@ -4,7 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		mc:Ignorable="d"
-        Title="NodeEditor" WindowState="Maximized" Loaded="Window_Loaded">
+        Title="Node Editor"
+		WindowState="Maximized"
+		Loaded="Window_Loaded"
+		Style="{StaticResource WindowStyle}">
+	<Window.CommandBindings>
+		<CommandBinding Command="New" CanExecute="NewCommand_CanExecute"  Executed="NewCommand_Executed" />
+		<CommandBinding Command="Open" Executed="OpenCommand_Executed" />
+		<CommandBinding Command="Save" Executed="SaveCommand_Executed" />
+	</Window.CommandBindings>
 	<Grid>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="Auto" />
@@ -12,17 +20,23 @@
 			<ColumnDefinition Width="Auto" />
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
-		<ListBox Grid.RowSpan="99" x:Name="lbNodes" MinWidth="100" SelectionChanged="lbNodes_SelectionChanged">
+		<Menu Grid.ColumnSpan="99">
+			<MenuItem Header="New" Command="New" />
+			<MenuItem Header="Open" Command="Open" />
+			<MenuItem Header="Save" Command="Save" />
+		</Menu>
+		<ListBox Grid.RowSpan="99" x:Name="lbNodes" MinWidth="100" SelectionChanged="lbNodes_SelectionChanged" Grid.Row="1">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<TextBlock Text="{Binding Path=Name}" />
 				</DataTemplate>
 			</ListBox.ItemTemplate>
 		</ListBox>
-		<Grid Grid.Column="1">
+		<Grid Grid.Column="1" Grid.Row="1">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="Auto" />
 				<ColumnDefinition Width="*" />
@@ -34,11 +48,11 @@
 			<TextBlock Margin="{StaticResource MarginSize}" Text="Node Name:" HorizontalAlignment="Right" VerticalAlignment="Center" />
 			<TextBox x:Name="txtName" Grid.Column="1" />
 		</Grid>
-		<TabControl x:Name="tabs" Grid.Column="1" Grid.Row="1">
+		<TabControl x:Name="tabs" Grid.Column="1" Grid.Row="2">
 			<TabItem Header="+" />
 		</TabControl>
 
-		<StackPanel Grid.Column="2" Grid.RowSpan="999">
+		<StackPanel Grid.Column="2" Grid.RowSpan="999" Grid.Row="1">
 			<Button x:Name="btnSave" Click="btnSave_Click">Save Node</Button>
 			<Button x:Name="btnClear" Click="btnClear_Click">Clear</Button>
 			<Button x:Name="btnDelete" Click="btnDelete_Click" IsEnabled="False">Delete Node</Button>
